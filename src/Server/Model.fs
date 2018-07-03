@@ -8,15 +8,15 @@ module Model
 #endif
 
 module TextAst =
-    type Word = Word of string
+    type Word = | Word of string
 
     module Input =
-        type Sentence = Sentence of Word list
-        type InputText = Text of Sentence list
+        type Sentence = | Sentence of Word list
+        type InputText = | Text of Sentence list
 
     module Output = 
-        type OutputSentence = Sentence of Word list
-        type OutputText = Text of OutputSentence list
+        type OutputSentence = | Sentence of Word list
+        type OutputText = | Text of OutputSentence list
     
     let sortCaseInsensetive (Input.Text xs) =
         let sentenceFolder acc (Input.Sentence sentence) =
@@ -31,11 +31,11 @@ module TextAst =
 open TextAst.Output
 
 module XmlAst =
-    type XmlWord =  XmlWord of string 
-    type XmlSentence = XmlSentence of XmlWord list 
-    type XmlTextBody = XmlTextBody of XmlSentence list 
-    type XmlHeader = XmlHeader of string
-    type XmlText = XmlText of XmlHeader * XmlTextBody
+    type XmlWord = | XmlWord of string 
+    type XmlSentence = | XmlSentence of XmlWord list 
+    type XmlTextBody = | XmlTextBody of XmlSentence list 
+    type XmlHeader = | XmlHeader of string
+    type XmlText = | XmlText of XmlHeader * XmlTextBody
     
     let private tag tag s  = sprintf "<%s>%s</%s>" tag s tag
 
@@ -82,20 +82,21 @@ module XDocAst =
 
 module CsvAst = 
 
-    type HeaderCell = HeaderCell of string
+    type Cell =
+        | DummyCell 
+        | Cell of string 
 
-    type DummyCell = DummyCell
-    type TableHeader = TableHeader of DummyCell * HeaderCell list
-    type Cell = Cell of string
-    type RowHeader = RowHeader of string
-    type Row = Row of RowHeader * Cell list
-    type Csv = Csv of TableHeader * Row list
-    let toString (Csv (h,rs)) = 
-        let csvH (TableHeader (head,tail)) =
-            //let (DummyCell dc) = head
-
-            "" 
-        sprintf "%A\n%A" (csvH h) rs
+    type Row = | Row of Cell list
+    
+    type Csv = | Csv of Row list
+    let toString (Csv rows) = 
+        let renderCell = function
+            | DummyCell -> ""
+            | Cell c -> c
+        rows
+        |> List.map ( fun (Row r) -> r |> List.map renderCell |> String.concat ",")
+        |> String.concat "\n" 
+        
 open CsvAst
 
 module Mappers =
@@ -130,18 +131,19 @@ module Mappers =
             let i = findLongestSentence xss//List.maxBy (fun (Sentence s) -> List.length s) xss |> ( fun os -> match os with | Sentence s -> List.length s
             let headerCells = 
                 [1..i]
-                |> List.map ((sprintf "Word %i") >> HeaderCell.HeaderCell) 
-            (DummyCell, headerCells) |> TableHeader          
-        let h = t |> toHeader
-        let toCsvRows (xss:  OutputSentence list) =
+                |> List.map ((sprintf "Word %i") >> Cell) 
+            DummyCell::headerCells |> Row          
+
+        let toCsvBody (xss:  OutputSentence list) =
             let toRow index (Output.Sentence ws) =
+                let rh = sprintf "Sentence %i" (index + 1) |> Cell
                 let cells = ws |> List.map (fun (Word w) -> Cell w)
-                let rh = sprintf "Sentence %i" (index + 1) |> RowHeader
-                (rh, cells) |> Row
+                rh::cells |> Row
             xss |> List.mapi toRow
 
-        let rows = t |> toCsvRows
-        (h, rows) |> Csv        
+        let h = t |> toHeader
+        let rows = t |> toCsvBody
+        h::rows |> Csv        
 
 open TextAst
 open TextAst.Input

@@ -166,24 +166,26 @@ sortCaseInsensetive text |> Mappers.toXDocument |> Result.bind (XDocAst.toString
 
 open System
 type UseCase_v1 = 
-    String -> 
-        ParsedText -> 
-            ParsedText -> (* contains sorted words *)
+    String -> (* plain input text*)
+        ParsedText -> (* parsed and structured input text *)
+            ParsedText -> (* now with sorted words *)
                 string (*rendered in CSV or XML formats*) 
 type UseCase_v1_a = 
-    String -> 
-        ParsedText -> 
-            SortedText -> (* an structure which is isomorphic to the Text structure *) 
+    String -> (* plain input text*)
+        ParsedText -> (* parsed and structured input text *)
+            SortedText -> (* a structure which is isomorphic to the Text structure *) 
                 string (* rendered in CSV or XML formats *) 
+
 type UseCase_v2 =
-    String ->
-        ParsedText -> 
-            ParsedText -> (* contains sorted words *)
-                OutputFormat -> (* CSV or XML strutures *)
+    String -> (* plain input text*)
+        ParsedText ->  (* parsed and structured input text *)
+            ParsedText -> (* now with sorted words *)
+                OutputFormat -> (* CSV or XML strutures, which are also isomorphic to the Parsedtext *)
                     string (* the output structure rendered*)
+
 type UseCase_v2_a =
-    String ->
-        ParsedText -> 
-            SortedText -> 
-                OutputFormat -> (* CSV or XML strutures *)
+    String -> (* plain input text*)
+        ParsedText -> (* parsed and structured input text *)
+            SortedText -> (* a structure which is isomorphic to the Text structure *)
+                OutputFormat -> (* CSV or XML strutures, which are also isomorphic to the Parsedtext*)
                     string (* the output structure rendered*)

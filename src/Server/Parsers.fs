@@ -1,31 +1,31 @@
 module Parsers
-open Model
+open Model.TextAst
 open FParsec
 
-type UserState = unit
-type Parser<'t> = Parser<'t, UserState>
+type private UserState = unit
+type private Parser<'t> = Parser<'t, UserState>
 
-let hyphen = "-"
-let pHyphen = pstring hyphen
+let private hyphen = "-"
+let private pHyphen = pstring hyphen
 
-let collectParsers list = list |> List.map pstring |> choice
+let private chooseStringParser list = list |> List.map pstring |> choice
 
 let pAbbriviation =
-    ["Mr."; "Mrs."; "P.S."; "D.I.Y"] |> collectParsers
+    ["Mr."; "Mrs."; "P.S."; "D.I.Y"] |> chooseStringParser
 
 
 let pSentenceStop =
-    [".";"!"; "?"; "…"; "?!"; ] |> collectParsers
+    [".";"!"; "?"; "…"; "?!"; ] |> chooseStringParser
 
-let pWordPart = many1Satisfy (fun c -> isLetter c || isDigit c)
+let private pWordPart = many1Satisfy (fun c -> isLetter c || isDigit c)
 
-let pRegularWord = 
+let pCompositeWord = 
     sepBy1 pWordPart pHyphen
     |>> String.concat hyphen
 
-let pCapitalLetter = satisfy isUpper |>> string 
+let private pCapitalLetter = satisfy isUpper |>> string 
 
-let pCapitalizedWordTailWithOptHyphen =
+let private pCapitalizedWordTailWithOptHyphen =
     let concatWithHyphen list = String.concat hyphen list
     let tailStartsWithHyphen = pHyphen .>>. (sepBy1 pWordPart pHyphen) |>> (fun (a, b) -> a + concatWithHyphen b)
     let tail = (sepBy pWordPart pHyphen) |>> concatWithHyphen
@@ -36,11 +36,12 @@ let pCapitalizedWord =
     |>> (fun (a,b) -> a + b)
 
 let pWordSeparator = 
-    [","; " - "; ":"; " "] |> collectParsers
+    [","; " - "; ":"; " "] |> chooseStringParser
     |> many
 
-let pSentenceStart = (pAbbriviation <|> pCapitalizedWord) |>> Word
-let pSentenceWord = (pAbbriviation <|> pRegularWord) |>> Word
+let private pWord aWord = (pAbbriviation <|> aWord) |>> Word
+let private pSentenceStart = pCapitalizedWord |> pWord 
+let private pSentenceWord = pCompositeWord |> pWord
 
 let pSentence = 
     let concat (head, tail) = head::tail
@@ -48,9 +49,9 @@ let pSentence =
     .>>. (sepEndBy pSentenceWord pWordSeparator) 
     .>> pSentenceStop 
     |>> concat 
-    |>> Sentence
+    |>> Input.Sentence
 
-let pText = spaces >>. many1 (spaces >>. pSentence .>> spaces ) .>> spaces |>> InputText
+let pText = spaces >>. many1 (spaces >>. pSentence .>> spaces ) .>> spaces |>> Input.Text
     
 let parse t =
     match run pText t with

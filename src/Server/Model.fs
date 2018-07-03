@@ -7,14 +7,29 @@ module Model
 #r "System.Xml.Linq" 
 #endif
 
-module TextCat =
+module TextAst =
     type Word = Word of string
-    type Sentence = Sentence of Word list
-    type SortedSentence = SortedSentence of Word list
-    type InputText = InputText of Sentence list
-    type SortedText = SortedText of SortedSentence list
 
-module XmlCat =
+    module Input =
+        type Sentence = Sentence of Word list
+        type InputText = Text of Sentence list
+
+    module Output = 
+        type OutputSentence = Sentence of Word list
+        type OutputText = Text of OutputSentence list
+    
+    let sortCaseInsensetive (Input.Text xs) =
+        let sentenceFolder acc (Input.Sentence sentence) =
+            let toLower (x:string) = x.ToLower() 
+            let s = sentence 
+                    |> List.sortBy ( fun (Word w) -> toLower w)
+                    |> Output.Sentence
+            acc @ [s]
+        xs
+        |> List.fold sentenceFolder [] 
+        |> Output.Text
+
+module XmlAst =
     type XmlWord =  XmlWord of string 
     type XmlSentence = XmlSentence of XmlWord list 
     type XmlTextBody = XmlTextBody of XmlSentence list 
@@ -49,7 +64,7 @@ module XmlCat =
         let (XmlHeader strHeader) = header
         strHeader + (bodyToString body)
 
-module XDocCat =
+module XDocAst =
     open System.Xml.Linq
     
     let XDeclaration version encoding standalone = XDeclaration(version, encoding, standalone)
@@ -64,49 +79,33 @@ module XDocCat =
             Result.Ok (wr.ToString()) 
         with ex -> Result.Error (ex.ToString())
 
-module Transformers =
-    open TextCat
+module Mappers =
+    open TextAst
 
-    open XmlCat
+    open XmlAst
     let toXml st =
         let toXmlHeader () = XmlHeader """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"""   
         let toXmlWord (Word w) = XmlWord w
-        let toXmlSentence (SortedSentence s) = s |> List.map toXmlWord |> XmlSentence    
-        let toXmlTextBody (SortedText ss) =  ss |> List.map toXmlSentence |> XmlTextBody
+        let toXmlSentence (Output.Sentence s) = s |> List.map toXmlWord |> XmlSentence    
+        let toXmlTextBody (Output.Text ss) =  ss |> List.map toXmlSentence |> XmlTextBody
         let xmlTextBody = toXmlTextBody st
         let header = toXmlHeader()
         XmlText (header, xmlTextBody)
     
-    open XDocCat
-    let toXDocument (SortedText st) =
+    open XDocAst
+    let toXDocument (Output.Text st) =
         let toXWord (Word w) = XElement "word" [w]
         let toXWords ws = ws |> List.map toXWord
-        let toXSentence (SortedSentence s) = XElement "sentence" (s |> toXWords )
+        let toXSentence (Output.Sentence s) = XElement "sentence" (s |> toXWords )
         let xText = XElement "text" (st |> List.map toXSentence )
         try
             let xDoc = XDocument (XDeclaration "1.0" "UTF-8" "yes") [xText]
             Result.Ok xDoc
         with ex -> Result.Error (ex.ToString())
     
-    let sortCaseInsensetive (InputText xs) =
-        let sentenceFolder acc (Sentence sentence) =
-            let toLower (x:string) = x.ToLower() 
-            let s = sentence 
-                    |> List.sortBy ( fun (Word w) -> toLower w)
-                    |> SortedSentence
-            acc @ [s]
-        xs
-        |> List.fold sentenceFolder [] 
-        |> SortedText           
 
-open TextCat
-
-
-
-let transformSentences sentences =
-    sentences
-    |> List.map 
-
+open TextAst
+open TextAst.Input
 let text = 
     [["A"; "B"];["C"; "D"];["Z"; "F"]; ["y"; "G"]; ["X"; "h"]]
     |> List.map 
@@ -114,11 +113,11 @@ let text =
             sen
             |> List.map Word
             |> Sentence)
-    |> InputText 
+    |> Text 
 
 
 text |> printfn "%A"    
-Transformers.sortCaseInsensetive text |> printfn "%A"
-Transformers.sortCaseInsensetive text |> Transformers.toXml |> printfn "%A"
-Transformers.sortCaseInsensetive text |> Transformers.toXml |> XmlCat.toString |> printfn "%A"
-Transformers.sortCaseInsensetive text |> Transformers.toXDocument |> Result.bind (XDocCat.toString) |> printfn "%A"
+sortCaseInsensetive text |> printfn "%A"
+sortCaseInsensetive text |> Mappers.toXml |> printfn "%A"
+sortCaseInsensetive text |> Mappers.toXml |> XmlAst.toString |> printfn "%A"
+sortCaseInsensetive text |> Mappers.toXDocument |> Result.bind (XDocAst.toString) |> printfn "%A"

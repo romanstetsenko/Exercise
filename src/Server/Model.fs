@@ -85,12 +85,17 @@ module CsvAst =
     type HeaderCell = HeaderCell of string
 
     type DummyCell = DummyCell
-    type ColumnHeader = Header of DummyCell*HeaderCell list
+    type TableHeader = TableHeader of DummyCell * HeaderCell list
     type Cell = Cell of string
     type RowHeader = RowHeader of string
     type Row = Row of RowHeader * Cell list
-    type Csv = Csv of ColumnHeader * Row list
-    let toString csv = sprintf "%A" csv
+    type Csv = Csv of TableHeader * Row list
+    let toString (Csv (h,rs)) = 
+        let csvH (TableHeader (head,tail)) =
+            //let (DummyCell dc) = head
+
+            "" 
+        sprintf "%A\n%A" (csvH h) rs
 open CsvAst
 
 module Mappers =
@@ -126,7 +131,7 @@ module Mappers =
             let headerCells = 
                 [1..i]
                 |> List.map ((sprintf "Word %i") >> HeaderCell.HeaderCell) 
-            (DummyCell, headerCells) |> Header          
+            (DummyCell, headerCells) |> TableHeader          
         let h = t |> toHeader
         let toCsvRows (xss:  OutputSentence list) =
             let toRow index (Output.Sentence ws) =

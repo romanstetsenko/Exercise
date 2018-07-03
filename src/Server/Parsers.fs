@@ -1,6 +1,7 @@
 module Parsers
 open Model.TextAst
 open FParsec
+open Model
 
 type private UserState = unit
 type private Parser<'t> = Parser<'t, UserState>
@@ -48,9 +49,9 @@ let pSentence =
     .>>. (sepEndBy pSentenceWord pWordSeparator) 
     .>> pSentenceStop 
     |>> concat 
-    |>> InputSentence
+    |>> Sentence
 
-let pText = spaces >>. many1 (spaces >>. pSentence .>> spaces ) .>> spaces |>> InputText
+let pText = spaces >>. many1 (spaces >>. pSentence .>> spaces ) .>> spaces |>> TextAst.Text
     
 let parse t =
     match run pText t with

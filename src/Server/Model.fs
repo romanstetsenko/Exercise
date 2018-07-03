@@ -28,6 +28,7 @@ module TextAst =
         xs
         |> List.fold sentenceFolder [] 
         |> Output.Text
+open TextAst.Output
 
 module XmlAst =
     type XmlWord =  XmlWord of string 
@@ -79,30 +80,63 @@ module XDocAst =
             Result.Ok (wr.ToString()) 
         with ex -> Result.Error (ex.ToString())
 
+module CsvAst = 
+
+    type HeaderCell = HeaderCell of string
+
+    type DummyCell = DummyCell
+    type ColumnHeader = Header of DummyCell*HeaderCell list
+    type Cell = Cell of string
+    type RowHeader = RowHeader of string
+    type Row = Row of RowHeader * Cell list
+    type Csv = Csv of ColumnHeader * Row list
+    let toString csv = sprintf "%A" csv
+open CsvAst
+
 module Mappers =
     open TextAst
 
     open XmlAst
-    let toXml st =
+    let toXml t =
         let toXmlHeader () = XmlHeader """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"""   
         let toXmlWord (Word w) = XmlWord w
         let toXmlSentence (Output.Sentence s) = s |> List.map toXmlWord |> XmlSentence    
         let toXmlTextBody (Output.Text ss) =  ss |> List.map toXmlSentence |> XmlTextBody
-        let xmlTextBody = toXmlTextBody st
+        let xmlTextBody = toXmlTextBody t
         let header = toXmlHeader()
         XmlText (header, xmlTextBody)
     
     open XDocAst
-    let toXDocument (Output.Text st) =
+    let toXDocument (Output.Text t) =
         let toXWord (Word w) = XElement "word" [w]
         let toXWords ws = ws |> List.map toXWord
         let toXSentence (Output.Sentence s) = XElement "sentence" (s |> toXWords )
-        let xText = XElement "text" (st |> List.map toXSentence )
+        let xText = XElement "text" (t |> List.map toXSentence )
         try
             let xDoc = XDocument (XDeclaration "1.0" "UTF-8" "yes") [xText]
             Result.Ok xDoc
         with ex -> Result.Error (ex.ToString())
     
+    let toCsv (Output.Text t) =
+        let toHeader (xss:  OutputSentence list) =
+            let findLongestSentence ss =
+                let folder acc (Output.Sentence s) = if acc <= List.length s then List.length s else acc 
+                List.fold folder 0 ss
+            let i = findLongestSentence xss//List.maxBy (fun (Sentence s) -> List.length s) xss |> ( fun os -> match os with | Sentence s -> List.length s
+            let headerCells = 
+                [1..i]
+                |> List.map ((sprintf "Word %i") >> HeaderCell.HeaderCell) 
+            (DummyCell, headerCells) |> Header          
+        let h = t |> toHeader
+        let toCsvRows (xss:  OutputSentence list) =
+            let toRow index (Output.Sentence ws) =
+                let cells = ws |> List.map (fun (Word w) -> Cell w)
+                let rh = sprintf "Sentence %i" (index + 1) |> RowHeader
+                (rh, cells) |> Row
+            xss |> List.mapi toRow
+
+        let rows = t |> toCsvRows
+        (h, rows) |> Csv        
 
 open TextAst
 open TextAst.Input

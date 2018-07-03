@@ -13,7 +13,6 @@ let private chooseStringParser list = list |> List.map pstring |> choice
 let pAbbriviation =
     ["Mr."; "Mrs."; "P.S."; "D.I.Y"] |> chooseStringParser
 
-
 let pSentenceStop =
     [".";"!"; "?"; "…"; "?!"; ] |> chooseStringParser
 
@@ -49,9 +48,9 @@ let pSentence =
     .>>. (sepEndBy pSentenceWord pWordSeparator) 
     .>> pSentenceStop 
     |>> concat 
-    |>> Input.Sentence
+    |>> InputSentence
 
-let pText = spaces >>. many1 (spaces >>. pSentence .>> spaces ) .>> spaces |>> Input.Text
+let pText = spaces >>. many1 (spaces >>. pSentence .>> spaces ) .>> spaces |>> InputText
     
 let parse t =
     match run pText t with

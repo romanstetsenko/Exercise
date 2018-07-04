@@ -6,10 +6,12 @@ open Model
 type private UserState = unit
 type private Parser<'t> = Parser<'t, UserState>
 type Config = {
-    abbriviations: string list
+    abbreviations: string list
+    sentenceStops: string list
 }
 let config = {
-    abbriviations = ["Mr."; "Mrs."; "P.S."; "D.I.Y"] 
+    abbreviations = ["Mr."; "Mrs."; "P.S."; "D.I.Y"]
+    sentenceStops = [".";"!"; "?"; "…";]
 }
 let private hyphen = "-"
 let private pHyphen = pstring hyphen
@@ -17,10 +19,10 @@ let private pHyphen = pstring hyphen
 let private chooseStringParser list = list |> List.map pstring |> choice
 
 let pAbbreviation =
-    config.abbriviations |> chooseStringParser
+    config.abbreviations |> chooseStringParser
 
 let pSentenceStop =
-    [".";"!"; "?"; "…"; "?!"; ] |> chooseStringParser
+    config.sentenceStops |> chooseStringParser
 
 let private pWordPart = many1Satisfy (fun c -> isLetter c || isDigit c)
 
@@ -52,7 +54,7 @@ let pSentence =
     let concat (head, tail) = head::tail
     (pSentenceStart .>> pWordSeparator)
     .>>. (sepEndBy pSentenceWord pWordSeparator) 
-    .>> pSentenceStop 
+    .>> (many1 pSentenceStop) 
     |>> concat 
     |>> Sentence
 

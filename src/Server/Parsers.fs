@@ -1,4 +1,4 @@
-module Parsers
+module TextParsers
 open Model.TextAst
 open FParsec
 open Model

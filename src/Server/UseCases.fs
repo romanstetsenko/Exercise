@@ -12,7 +12,7 @@ let useCase parse sort convert input =
     |> Result.map convert
 
 let handler converter = 
-    useCase TextParsers.parse TextAst.sortText converter
+    useCase TextParser.parse TextAst.sortText converter
 
 open Model.Converters
 let handleToCsv = handler Csv.convert 

@@ -6,7 +6,7 @@
   <ItemGroup>
     <Compile Include="../Shared/Shared.fs" />
     <Compile Include="Model.fs" />
-    <Compile Include="Parsers.fs" />
+    <Compile Include="Parser.fs" />
     <Compile Include="UseCases.fs" />
     <Compile Include="Server.fs" />
   </ItemGroup>

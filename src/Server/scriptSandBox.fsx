@@ -22,8 +22,8 @@ Cinderella likes shoes."
 test pText text1
 test pText text1'
 
-test pAbbriviation "Mr."
-test pAbbriviation "Mr"
+test pAbbreviation "Mr."
+test pAbbreviation "Mr"
 test pSentenceStop "2"
 test pSentenceStop "!?"
 

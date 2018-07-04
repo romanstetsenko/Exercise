@@ -1,18 +1,23 @@
-module TextParsers
+module TextParser
 open Model.TextAst
 open FParsec
 open Model
 
 type private UserState = unit
 type private Parser<'t> = Parser<'t, UserState>
-
+type Config = {
+    abbriviations: string list
+}
+let config = {
+    abbriviations = ["Mr."; "Mrs."; "P.S."; "D.I.Y"] 
+}
 let private hyphen = "-"
 let private pHyphen = pstring hyphen
 
 let private chooseStringParser list = list |> List.map pstring |> choice
 
-let pAbbriviation =
-    ["Mr."; "Mrs."; "P.S."; "D.I.Y"] |> chooseStringParser
+let pAbbreviation =
+    config.abbriviations |> chooseStringParser
 
 let pSentenceStop =
     [".";"!"; "?"; "…"; "?!"; ] |> chooseStringParser
@@ -39,7 +44,7 @@ let pWordSeparator =
     [","; " - "; ":"; " "] |> chooseStringParser
     |> many
 
-let private pWord aWord = (pAbbriviation <|> aWord) |>> Word
+let private pWord aWord = (pAbbreviation <|> aWord) |>> Word
 let private pSentenceStart = pCapitalizedWord |> pWord 
 let private pSentenceWord = pCompositeWord |> pWord
 

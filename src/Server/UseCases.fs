@@ -11,12 +11,12 @@ let useCase parse sort convert input =
     |> Result.map sort 
     |> Result.map convert
 
-let handlerConversion converter = 
-    useCase (TextAst.parseText TextParsers.parse) TextAst.sortText converter
+let handler converter = 
+    useCase TextParsers.parse TextAst.sortText converter
 
 open Model.Converters
-let handleToCsv = handlerConversion Csv.convert 
-let handleToXml = handlerConversion Xml.convert
+let handleToCsv = handler Csv.convert 
+let handleToXml = handler Xml.convert
 
 let handleRequest = function
     | ConvertToCsv input ->
@@ -25,5 +25,5 @@ let handleRequest = function
         handleToXml input
 
 
-let csvHandler = ConvertToCsv >> handleRequest  
-let xmlHandler = ConvertToXml >> handleRequest  
+// let csvHandler = ConvertToCsv >> handleRequest  
+// let xmlHandler = ConvertToXml >> handleRequest  

@@ -23,7 +23,6 @@ module TextAst =
         xs
         |> List.fold sentenceFolder [] 
         |> Text
-    let parseText (parser: string->Result<Text,_>): string->Result<Text,_> = parser
 
 module Converters =
     open TextAst

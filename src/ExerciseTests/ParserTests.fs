@@ -86,6 +86,7 @@ let parserTests =
             testCase "Abbreviation can be a word at the start or in the middle of a sentence" <| fun _ ->
                 config.abbreviations |> testWordParser pSentenceStart            
                 config.abbreviations |> testWordParser pSentenceWord
+            
             testCase "other cases not applicable for capilized words" <| fun _ ->
                 let input = [
                     "a"
@@ -99,5 +100,17 @@ let parserTests =
                     "aa-1-11-111"
                 ]    
                 input |> testWordParser pSentenceWord
+        ]
+        testList "pSentence" [
+            testCase "It parses a single word sentence" <| fun _ ->
+                let input = [
+                    "Hi!"
+                    "Mr.?"
+                ]
+                let actual = [
+                    Sentence (Word "Hi")
+                    Sentence (Word "Mr.")
+                ]
+                |> testWordParser pSentence            
         ]
     ]

@@ -28,7 +28,7 @@ let pSentenceStop =
 
 let private pWordPart = many1Satisfy (fun c -> isLetter c || isDigit c)
 
-let pCompositeWord = 
+let private pCompositeWord = 
     sepBy1 pWordPart pHyphen
     |>> String.concat hyphen
 
@@ -40,12 +40,12 @@ let private pCapitalizedWordTailWithOptHyphen =
     let tail = (sepBy pWordPart pHyphen) |>> concatWithHyphen
     tailStartsWithHyphen <|> tail
 
-let pCapitalizedWord = 
+let private pCapitalizedWord = 
     pCapitalLetter .>>. pCapitalizedWordTailWithOptHyphen 
     |>> (fun (a,b) -> a + b)
 
 let pWordSeparator = 
-    [","; " - "; ":"; " "] |> chooseStringParser
+    config.wordSeparators |> chooseStringParser
     |> many
 
 let private pWord aWord = (pAbbreviation <|> aWord) |>> Word

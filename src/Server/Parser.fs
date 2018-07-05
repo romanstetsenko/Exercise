@@ -8,10 +8,12 @@ type private Parser<'t> = Parser<'t, UserState>
 type Config = {
     abbreviations: string list
     sentenceStops: string list
+    wordSeparators: string list
 }
 let config = {
     abbreviations = ["Mr."; "Mrs."; "P.S."; "D.I.Y"]
     sentenceStops = [".";"!"; "?"; "…";]
+    wordSeparators = [","; " - "; ":"; " "]
 }
 let private hyphen = "-"
 let private pHyphen = pstring hyphen
@@ -30,7 +32,7 @@ let pCompositeWord =
     sepBy1 pWordPart pHyphen
     |>> String.concat hyphen
 
-let private pCapitalLetter = satisfy isUpper |>> string 
+let private pCapitalLetter = satisfy (fun c -> isUpper c || isDigit c) |>> string 
 
 let private pCapitalizedWordTailWithOptHyphen =
     let concatWithHyphen list = String.concat hyphen list
@@ -47,13 +49,12 @@ let pWordSeparator =
     |> many
 
 let private pWord aWord = (pAbbreviation <|> aWord) |>> Word
-let private pSentenceStart = pCapitalizedWord |> pWord 
-let private pSentenceWord = pCompositeWord |> pWord
+let pSentenceStart = pCapitalizedWord |> pWord 
+let pSentenceWord = pCompositeWord |> pWord
 
 let pSentence = 
     let concat (head, tail) = head::tail
-    (pSentenceStart .>> pWordSeparator)
-    .>>. (sepEndBy pSentenceWord pWordSeparator) 
+    (pSentenceStart .>> pWordSeparator) .>>. (sepEndBy pSentenceWord pWordSeparator) 
     .>> (many1 pSentenceStop) 
     |>> concat 
     |>> Sentence

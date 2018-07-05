@@ -1,58 +1,103 @@
 module ParseTests
 open Expecto
+open Expecto.Flip
 open FParsec
 
 
 open TextParser
-open FsCheck
-// let extract = function
-//     | Success (s, _ , _) -> s
-//     | Failure (f, _ , _) -> f
+open Model.TextAst
 
-let testParser p str =
+let private testParser p str =
     match run p str with
     | Success(result, _, _)   -> result
     | Failure(errorMsg, _, _) -> errorMsg
 
-module Gens =
-    open FsCheck
-    type Letter = Letter of char
-    type TrivialWord = TrivialWord of string
-
-    type Float01 = Float01 of float
-    
-    type 'a ListOf100 = ListOf100 of 'a list
-    let listOf100Arb() =
-        Gen.listOfLength 100 Arb.generate
-        |> Arb.fromGen
-        |> Arb.convert ListOf100 (fun (ListOf100 l) -> l)
-    let float01Arb =
-        let maxValue = float 10000
-        Arb.convert
-            (fun (DoNotSize a) -> float a / maxValue |> Float01)
-            (fun (Float01 f) -> f * maxValue + 0.5 |> uint64 |> DoNotSize)
-            Arb.from
-    //let trivialWordGen = Arb.from
+let private testWordParser parser input =
+    input 
+    |> List.map (run parser)
+    |> List.filter 
+        (fun r ->
+            match r with
+            | Success _   -> true
+            | Failure _ -> false
+        ) 
+    |> List.map ( fun r -> match r with | Success ((Word w),_,_) -> w)                
+    |> Expect.containsAll "Seq is equal" input
 
 [<Tests>]
 let parserTests = 
     testList "Parser tests" [
         testList "pAbbreviation" [
             testCase "Parse own config" <| fun _ ->
-                let actual = 
-                    config.abbreviations
-                    |> List.map (testParser pAbbreviation) 
-                Expect.containsAll actual config.abbreviations "default config must be parsed"       
+                config.abbreviations
+                |> List.map (testParser pAbbreviation) 
+                |> Expect.containsAll "default config must be parsed" config.abbreviations        
         ]
         testList "pSentenceStop" [
             testCase "Parse own config" <| fun _ ->
-                let actual = 
-                    config.sentenceStops
-                    |> List.map (testParser pSentenceStop) 
-                Expect.containsAll actual config.sentenceStops "default config must be parsed"
+                config.sentenceStops
+                |> List.map (testParser pSentenceStop) 
+                |> Expect.containsAll "default config must be parsed" config.sentenceStops 
         ]
-        testList "pCompositeWord" [
-            testCase "Parse a trivial word" <| fun _ ->
-                ()
+        testList "pSentenceStart and pSentenceWord" [
+            testCase "Word starts with a capital letter" <| fun _ ->
+                let input = [
+                    "A"
+                    "AA"
+                    "Aa"
+                    "AA-1"
+                    "Aa-A"
+                    "Aa-A1"
+                    "Aa-AA"
+                    "Aa-Aa"
+                    "AAa-1-1"
+                    "Aa-1-a"
+                    "Aa-A-A"
+                    "A1-1-1"
+                    "Aa-aa-aaa"
+                    "Aa-aA-aAa"
+                    "A1-1a-1A"
+                ] 
+                input |> testWordParser pSentenceStart
+                input |> testWordParser pSentenceWord
+
+            testCase "Word starts with a number" <| fun _ ->
+                let input = [
+                    "1"
+                    "11"
+                    "1a"
+                    "1A-1"
+                    "1Aa-A"
+                    "1Aa-A1"
+                    "1Aa-AA"
+                    "1Aa-Aa"
+                    "1Aa-1-1"
+                    "1Aa-11-11"
+                    "1a-A-A"
+                    "1A-Aa-AA"
+                    "1a-Aa-AA"
+                    "1A-1a-a1"
+                    "1-11-11"
+                    "11-111-1111"
+                ] 
+                input |> testWordParser pSentenceStart
+                input |> testWordParser pSentenceWord
+
+            testCase "Abbreviation can be a word at the start or in the middle of a sentence" <| fun _ ->
+                config.abbreviations |> testWordParser pSentenceStart            
+                config.abbreviations |> testWordParser pSentenceWord
+            testCase "other cases not applicable for capilized words" <| fun _ ->
+                let input = [
+                    "a"
+                    "aA"
+                    "aA-11"
+                    "aA-1a"
+                    "aA-1A"
+                    "aA-A1"
+                    "aA-a1"
+                    "aa-a1"
+                    "aa-1-11-111"
+                ]    
+                input |> testWordParser pSentenceWord
         ]
     ]

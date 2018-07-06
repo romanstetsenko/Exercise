@@ -18,13 +18,24 @@ let port = 8085us
 let getInitCounter () : Task<Counter> = task { return 42 }
 
 let webApp : HttpHandler =
-    route "/api/init" >=>
-        fun next ctx ->
-            task {
-                let! counter = getInitCounter()
-                return! Successful.OK counter next ctx
-            }
-
+    subRoute "/api"
+        (
+            choose [
+                route "/init" >=>
+                    fun next ctx ->
+                        task {
+                            let! counter = getInitCounter()
+                            return! Successful.OK counter next ctx
+                        }
+                subRoute  "/parse-to" (
+                    choose [
+                        POST >=> route "/xml" >=> HttpHandlers.XmlConvertHandler
+                        POST >=> route "/csv" >=> HttpHandlers.CsvConvertHandler
+                    ])
+                ]
+        ) 
+        
+        
 let configureApp    (app : IApplicationBuilder) =
     app.UseDefaultFiles()
        .UseStaticFiles()

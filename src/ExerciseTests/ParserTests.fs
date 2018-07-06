@@ -7,7 +7,7 @@ open FParsec
 open TextParser
 open Model.TextAst
 
-let private testParser p str =
+let private testStrParser p str =
     match run p str with
     | Success(result, _, _)   -> result
     | Failure(errorMsg, _, _) -> errorMsg
@@ -30,13 +30,13 @@ let parserTests =
         testList "pAbbreviation" [
             testCase "Parse own config" <| fun _ ->
                 config.abbreviations
-                |> List.map (testParser pAbbreviation) 
+                |> List.map (testStrParser pAbbreviation) 
                 |> Expect.containsAll "default config must be parsed" config.abbreviations        
         ]
         testList "pSentenceStop" [
             testCase "Parse own config" <| fun _ ->
                 config.sentenceStops
-                |> List.map (testParser pSentenceStop) 
+                |> List.map (testStrParser pSentenceStop) 
                 |> Expect.containsAll "default config must be parsed" config.sentenceStops 
         ]
         testList "pSentenceStart and pSentenceWord" [

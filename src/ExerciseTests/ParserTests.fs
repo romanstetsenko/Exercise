@@ -23,6 +23,18 @@ let private testWordParser parser input =
         ) 
     |> List.map ( fun r -> match r with | Success ((Word w),_,_) -> w)                
     |> Expect.containsAll "Seq is equal" input
+let private testSentenceParser parser expected input =
+    input 
+    |> List.map (run parser)
+    |> List.filter 
+        (fun r ->
+            match r with
+            | Success _   -> true
+            | Failure _ -> false
+        ) 
+    |> List.map ( fun r -> match r with | Success (s,_,_) -> s)
+    |> Expect.containsAll "Seq is equal" expected
+
 
 [<Tests>]
 let parserTests = 
@@ -102,15 +114,20 @@ let parserTests =
                 input |> testWordParser pSentenceWord
         ]
         testList "pSentence" [
-            testCase "It parses a single word sentence" <| fun _ ->
+            testCase "It parses a sentence" <| fun _ ->
                 let input = [
                     "Hi!"
                     "Mr.?"
+                    "Mary had a little lamb. Peter called for the wolf, and Aesop came. "
+                    "Peter called for the wolf, and Aesop came."
                 ]
                 let actual = [
-                    Sentence (Word "Hi")
-                    Sentence (Word "Mr.")
+                    Sentence [Word "Hi"]
+                    Sentence [Word "Mr."]
+                    Sentence [Word "Mary"; Word "had"; Word "a"; Word "little"; Word "lamb"]
+                    Sentence [Word "Peter"; Word "called"; Word "for"; Word "the"; Word "wolf"; Word "and"; Word "Aesop"; Word "came"]
+
                 ]
-                |> testWordParser pSentence            
+                input |> testSentenceParser pSentence actual             
         ]
     ]

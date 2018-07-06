@@ -12,7 +12,7 @@ let private testParser p str =
     | Success(result, _, _)   -> result
     | Failure(errorMsg, _, _) -> errorMsg
 
-let private testWordParser parser input =
+let private assertParser parser expected input =
     input 
     |> List.map (run parser)
     |> List.filter 
@@ -21,21 +21,9 @@ let private testWordParser parser input =
             | Success _   -> true
             | Failure _ -> false
         ) 
-    |> List.map ( fun r -> match r with | Success ((Word w),_,_) -> w)                
-    |> Expect.containsAll "Seq is equal" input
-let private testSentenceParser parser expected input =
-    input 
-    |> List.map (run parser)
-    |> List.filter 
-        (fun r ->
-            match r with
-            | Success _   -> true
-            | Failure _ -> false
-        ) 
-    |> List.map ( fun r -> match r with | Success (s,_,_) -> s)
+    |> List.map ( fun r -> match r with | Success (x,_,_) -> x )                
     |> Expect.containsAll "Seq is equal" expected
-
-
+let private toWord = List.map Word
 [<Tests>]
 let parserTests = 
     testList "Parser tests" [
@@ -70,8 +58,9 @@ let parserTests =
                     "Aa-aA-aAa"
                     "A1-1a-1A"
                 ] 
-                input |> testWordParser pSentenceStart
-                input |> testWordParser pSentenceWord
+                let expected = input |> toWord
+                input |> assertParser pSentenceStart expected
+                input |> assertParser pSentenceWord expected
 
             testCase "Word starts with a number" <| fun _ ->
                 let input = [
@@ -92,12 +81,14 @@ let parserTests =
                     "1-11-11"
                     "11-111-1111"
                 ] 
-                input |> testWordParser pSentenceStart
-                input |> testWordParser pSentenceWord
+                let expected = input |> toWord
+                input |> assertParser pSentenceStart expected
+                input |> assertParser pSentenceWord expected
 
             testCase "Abbreviation can be a word at the start or in the middle of a sentence" <| fun _ ->
-                config.abbreviations |> testWordParser pSentenceStart            
-                config.abbreviations |> testWordParser pSentenceWord
+                let expected = config.abbreviations |> toWord
+                config.abbreviations |> assertParser pSentenceStart expected            
+                config.abbreviations |> assertParser pSentenceWord expected
             
             testCase "other cases not applicable for capilized words" <| fun _ ->
                 let input = [
@@ -111,14 +102,15 @@ let parserTests =
                     "aa-a1"
                     "aa-1-11-111"
                 ]    
-                input |> testWordParser pSentenceWord
+                let expected = (input |> toWord)
+                input |> assertParser pSentenceWord expected
         ]
         testList "pSentence" [
             testCase "It parses a sentence" <| fun _ ->
                 let input = [
                     "Hi!"
                     "Mr.?"
-                    "Mary had a little lamb. Peter called for the wolf, and Aesop came. "
+                    "Mary had a little lamb."
                     "Peter called for the wolf, and Aesop came."
                 ]
                 let actual = [
@@ -128,6 +120,38 @@ let parserTests =
                     Sentence [Word "Peter"; Word "called"; Word "for"; Word "the"; Word "wolf"; Word "and"; Word "Aesop"; Word "came"]
 
                 ]
-                input |> testSentenceParser pSentence actual             
+                input |> assertParser pSentence actual             
+        ]
+        testList "pText" [
+            testCase "it parses whole well formated text" <| fun _ ->
+                let input = [
+                    """Mary had a little lamb. Peter called for the wolf, and Aesop came. 
+Cinderella likes shoes."""
+                ]
+
+                let a1 = 
+                    Text [
+                        Sentence [Word "Mary"; Word "had"; Word "a"; Word "little"; Word "lamb"];
+                        Sentence [Word "Peter"; Word "called"; Word "for"; Word "the"; Word "wolf"; Word "and"; Word "Aesop"; Word "came"];
+                        Sentence [Word "Cinderella"; Word "likes"; Word "shoes"]]
+                let actual = [a1]
+                input |> assertParser pText actual             
+            testCase "it parses whole not so well formated text" <| fun _ ->
+                let input = [
+                    """  Mary   had a little  lamb  . 
+
+
+  Peter   called for the wolf   ,  and Aesop came .
+ Cinderella  likes shoes.
+"""
+                ]
+
+                let a1 = 
+                    Text [
+                        Sentence [Word "Mary"; Word "had"; Word "a"; Word "little"; Word "lamb"];
+                        Sentence [Word "Peter"; Word "called"; Word "for"; Word "the"; Word "wolf"; Word "and"; Word "Aesop"; Word "came"];
+                        Sentence [Word "Cinderella"; Word "likes"; Word "shoes"]]
+                let actual = [a1]
+                input |> assertParser pText actual             
         ]
     ]

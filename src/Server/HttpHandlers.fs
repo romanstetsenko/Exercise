@@ -1,30 +1,25 @@
 module HttpHandlers
 open Giraffe
 open UseCases
+open Shared
+open System.Threading.Tasks
 
-[<CLIMutable>]
-type ConvertRequest = {
-    payload:string
-}
+let private getInitCounter () : Task<Counter> = task { return 42 }
 
-let XmlConvertHandler: Giraffe.Core.HttpHandler = 
-    fun (next : HttpFunc) ctx ->
+let initHandler = 
+    fun next ctx ->
         task {
-            let! request = ctx.BindJsonAsync<ConvertRequest>()
-            let response = 
-                match handleRequest (ConvertToXml request.payload) with
-                | Ok r -> Successful.OK r next ctx 
-                | Error r -> RequestErrors.UNPROCESSABLE_ENTITY r next ctx 
-            return! response
+            let! counter = getInitCounter()
+            return! Successful.OK counter next ctx
         }
 
-let CsvConvertHandler: Giraffe.Core.HttpHandler = 
-    fun (next : HttpFunc) ctx ->
+let transformHandler: HttpHandler =
+    fun (next: HttpFunc) ctx ->
         task {
-            let! request = ctx.BindJsonAsync<ConvertRequest>()
+            let! tr = ctx.BindModelAsync<Request>()
             let response = 
-                match handleRequest (ConvertToCsv request.payload) with
+                match handleRequest tr with
                 | Ok r -> Successful.OK r next ctx 
                 | Error r -> RequestErrors.UNPROCESSABLE_ENTITY r next ctx 
-            return! response
+            return! response            
         }

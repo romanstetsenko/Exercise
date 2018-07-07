@@ -9,6 +9,7 @@
     <Compile Include="Parser.fs" />
     <Compile Include="UseCases.fs" />
     <Compile Include="HttpHandlers.fs" />
+    <Compile Include="WebApp.fs" />
     <Compile Include="Server.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

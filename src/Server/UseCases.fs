@@ -1,9 +1,6 @@
 module UseCases
 open Model
-
-type Request =
-    | ConvertToCsv of string
-    | ConvertToXml of string
+open Shared
 
 let useCase parse sort convert input =
     input 
@@ -23,7 +20,3 @@ let handleRequest = function
         handleToCsv input
     | ConvertToXml input ->
         handleToXml input
-
-
-// let csvHandler = ConvertToCsv >> handleRequest  
-// let xmlHandler = ConvertToXml >> handleRequest  

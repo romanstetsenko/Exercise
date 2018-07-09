@@ -3,7 +3,7 @@ open Model.TextAst
 open FParsec
 open Model
 
-let (<?>) (p: Parser<_,_>) label : Parser<_,_> =
+let (<!>) (p: Parser<_,_>) label : Parser<_,_> =
     fun stream ->
         printfn "%A: Entering %s" stream.Position label
         let reply = p stream

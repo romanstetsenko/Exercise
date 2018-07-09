@@ -1,34 +1,41 @@
 module Transformations
 open Elmish
 open Fable.Helpers.React
+open Fulma
 
-type Model = {
-    transformations: Transformation.Model list
-}
+type Model = | Enabled | Disabled
 
 type Msg = 
-    | Init 
-    | Transform of Transformation.Msg
+    | TransformToCsv
+    | TransformToXml
+    | Enable
+    | Disable
 
-let init model =
-    model, Cmd.none
-
+let init () =
+    Disabled, Cmd.none
 let update msg model =
-    let model' =
-        match model, msg with
-        | _, Init -> model
-    model', Cmd.none   
-let transformation = Transformation.webComponent
+    match msg with
+    | Enable ->
+        Enabled, Cmd.none
+    | Disable ->
+        Disabled, Cmd.none
+    | _ -> 
+        model, Cmd.none    
 
+let actions model dispatch = 
+    [
+        "CSV", ( fun _ -> dispatch TransformToCsv)
+        "XML", ( fun _ -> dispatch TransformToXml)]
+    |> List.map (fun (txt, action) -> 
+                    match model with 
+                    | Enabled -> HtmlElements.actionButton txt action 
+                    | Disabled -> HtmlElements.disabledButton txt)
 let view model dispatch =
     div [] [
-        for submodel in model.transformations do
-            yield transformation.view submodel (Msg.Transform>>dispatch)
+        Field.div [] [
+            Label.label [] [ str "Choose output format:"]
+            Control.div [] [
+                HtmlElements.actionList (actions model dispatch)
+            ]
+        ]
     ]
-
-open Structure
-let webComponent = {
-    init =init
-    update = update
-    view = view
-}

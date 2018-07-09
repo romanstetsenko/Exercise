@@ -1,36 +1,36 @@
 module Presets
 open Elmish
 open Fable.Helpers.React
+open Fulma
 
-type Model = { 
-    presets: Preset.Model list
-}
+type Preset = string * string
+type Model = Model of Preset list
+
 type Msg = 
-    | Init
-    | PresetMsg of Preset.Msg
+    | SelectPreset of string
 
-let init model =
+let init () =
+    let model = 
+        Model [
+            "Single sentence","""Mary had a little lamb."""
+            "Multiple sentences","""Mary had a little lamb. Peter called for the wolf, and Aesop came. Cinderella likes shoes."""
+        ]
     model, Cmd.none
-
 let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
     match model, msg with
-    | _, PresetMsg pm -> 
-        match pm with 
-        | Preset.Msg.SelectPreset sp ->
-            model, Cmd.none
-    | _, Init ->
-        model, Cmd.none
+    | m, SelectPreset _ -> 
+        m, Cmd.none
 
+let toAction dispatcher (description, value) = HtmlElements.actionButton description ( fun _ -> dispatcher (SelectPreset value))
 
-let view (model: Model) (dispatcher: Msg -> unit) = 
+let view (Model model) (dispatcher: Msg -> unit) = 
     div [] [
-        for presetModel in model.presets do
-            yield Preset.webComponent.view presetModel (Msg.PresetMsg >>dispatcher)
+        Field.div [] [
+            Label.label [] [ str "Text samples:"]
+            Control.div [] [
+                model
+                |> List.map (toAction dispatcher)
+                |> HtmlElements.actionList
+            ]
+        ]
     ]
-
-open Structure
-let webComponent = {
-    init = init
-    update = update
-    view = view
-}

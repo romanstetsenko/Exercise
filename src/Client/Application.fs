@@ -1,6 +1,5 @@
 module Application
 open Elmish
-open Fable.Helpers.React
 
 type Model = {
     presets: Presets.Model
@@ -11,46 +10,61 @@ type Model = {
 
 type Msg = 
     | Init
-    | PresetsMsg of Presets.Msg
+    | Presets of Presets.Msg
     | InputArea of InputArea.Msg
     | Transformations of Transformations.Msg 
     | History of History.Msg
 
-
-let init model : Model * Cmd<Msg> =
-    model, Cmd.none
-
-let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
-    let model' =
-        match model, msg with
-        | _, Init -> model
-    model', Cmd.none    
-
-let presets = Presets.webComponent
-let inputArea = InputArea.webComponent
-let transformations = Transformations.webComponent
-let history = History.webComponent
-
-
-let view (model: Model) (dispatch: Msg -> unit) =
-    div [] [
-        div [] [
-            presets.view model.presets (Msg.PresetsMsg>>dispatch)
-        ]
-        div [] [
-            inputArea.view model.inputArea (Msg.InputArea>>dispatch)
-        ]
-        div [] [
-            transformations.view model.transformations (Msg.Transformations>>dispatch)
-        ]
-        div [] [
-            history.view model.history (Msg.History>>dispatch)
-        ]
+let init () : Model * Cmd<Msg> = 
+    let ps, psCmd = Presets.init()
+    let ia, iaCmd = InputArea.init()
+    let ts, tsCmd = Transformations.init()
+    let h, hCmd = History.init()
+    { 
+        presets = ps
+        inputArea = ia
+        transformations = ts
+        history = h
+    }, Cmd.batch [
+        Cmd.map Presets psCmd
+        Cmd.map InputArea iaCmd
+        Cmd.map Transformations tsCmd
+        Cmd.map History hCmd
     ]
 
-open Structure
-let webComponent = {
-    init = init
-    update = update
-    view = view
-}
+let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
+    match msg with
+    | InputArea msg' -> 
+        let res, cmd = InputArea.update msg' model.inputArea
+        let tCmd = (if res.hasError then Transformations.Disable else Transformations.Enable) |> Cmd.ofMsg
+        { model with inputArea = res }, 
+        Cmd.batch [            
+            Cmd.map InputArea cmd
+            Cmd.map Transformations tCmd
+        ]        
+    | Init -> failwith "Not Implemented"
+    | Presets msg' -> 
+        let (Presets.Msg.SelectPreset preset) = msg' 
+        let res, cmd = Presets.update msg' model.presets
+        { model with presets = res }, 
+        Cmd.batch [
+            Cmd.map Presets cmd
+            Cmd.ofMsg ((InputArea.ChangeContent preset) |> Msg.InputArea)
+        ]
+    | Transformations msg' ->         
+        let res, cmd = Transformations.update msg' model.transformations
+        { model with transformations = res }, cmd
+    | History(_) -> failwith "Not Implemented"        
+
+let view (model: Model) (dispatch: Msg -> unit) =
+    let containers = 
+        [
+            Presets.view model.presets (Msg.Presets>>dispatch)
+            InputArea.view model.inputArea (Msg.InputArea>>dispatch)
+            Transformations.view model.transformations (Msg.Transformations>>dispatch)
+            History.view model.history (Msg.History>>dispatch)
+        ] 
+        |> List.map (fun el -> HtmlElements.container [] [el]) 
+
+    HtmlElements.section [] containers
+    

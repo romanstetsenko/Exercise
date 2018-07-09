@@ -3,33 +3,22 @@ module History
 open Elmish
 open Fable.Helpers.React
 
-type Model = {
-    historyItems: HistoryItem.Model list
-}
+type Model = (string*string) list
 
 type Msg = 
-    | Init 
-    | HistoryItem of HistoryItem.Msg
+    | Reset 
+    | SelectHistoryRequest of string
 
-let init model =
-    model, Cmd.none
+let init () =
+    [], Cmd.none
 
 let update msg model =
-    let model' =
-        match model, msg with
-        | _, Init -> model
-    model', Cmd.none   
-let historyItem = HistoryItem.webComponent
+    match model, msg with
+    | _, Reset -> [], Cmd.none
+    | _ -> model, Cmd.none   
 
 let view model dispatch =
     div [] [
-        for subModel in model.historyItems do
-            yield historyItem.view subModel (Msg.HistoryItem>>dispatch)
+        for (request, response) in model do
+            yield HtmlElements.historyButton response ( fun _ -> dispatch (SelectHistoryRequest request))
     ]
-
-open Structure
-let webComponent = {
-    init =init
-    update = update
-    view = view
-}

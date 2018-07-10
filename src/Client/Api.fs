@@ -3,9 +3,10 @@ open Fable.PowerPack.Fetch
 open Fable.PowerPack
 open System
 open Fable.Core.JsInterop
+open Shared
 
 let transformTo requestType text = 
-    postRecord "/api/transform" (requestType text) []
+    postRecord Routes.Api.transform (requestType text) []
     |> Promise.bind( fun r -> r.text() )
     |> Promise.map ofJson<Result<string, string>>
     |> Promise.catch( fun _ex -> 
@@ -13,6 +14,7 @@ let transformTo requestType text =
         Console.WriteLine(_ex)
 #endif          
         failwith "Conectivity problems...")
+
 let transformToCsv = 
     transformTo Shared.ConvertToCsv
 

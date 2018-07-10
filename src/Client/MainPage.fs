@@ -34,29 +34,30 @@ let init () : Model * Cmd<Msg> =
         Cmd.map History hCmd
     ]
 
-let private handleTransformations msg' model =
-    let toApiCommand apiFunc text = 
-        Cmd.ofPromise apiFunc text 
-            (fun r -> 
-                let r' = History.HistoryItem.Response r
-                History.Msg.AddHistoryItem (text, r'))
-            (fun ex ->
-                let ex' = History.HistoryItem.Exn ex
-                History.Msg.AddHistoryItem (text, ex'))
-
-    let res, cmd = Transformations.update msg' model.transformations    
-    let transformRequest = 
-        let textToTransform = model.inputArea.textValue
-        match msg' with
-        | Transformations.TransformToCsv -> 
-            toApiCommand Api.transformToCsv textToTransform 
-        | Transformations.TransformToXml -> 
-            toApiCommand Api.transformToXml textToTransform 
-        | _ -> Cmd.none
-    { model with transformations = res }, 
-        Cmd.batch [ cmd; Cmd.map Msg.History transformRequest ]
 
 let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
+    let handleTransformations msg' model =
+        let toApiCommand apiFunc text = 
+            Cmd.ofPromise apiFunc text 
+                (fun r -> 
+                    let r' = History.HistoryItem.Response r
+                    History.Msg.AddHistoryItem (text, r'))
+                (fun ex ->
+                    let ex' = History.HistoryItem.Exn ex
+                    History.Msg.AddHistoryItem (text, ex'))
+
+        let res, cmd = Transformations.update msg' model.transformations    
+        let transformRequest = 
+            let textToTransform = model.inputArea.textValue
+            match msg' with
+            | Transformations.TransformToCsv -> 
+                toApiCommand Api.transformToCsv textToTransform 
+            | Transformations.TransformToXml -> 
+                toApiCommand Api.transformToXml textToTransform 
+            | _ -> Cmd.none
+        { model with transformations = res }, 
+            Cmd.batch [ cmd; Cmd.map Msg.History transformRequest ]
+    
     match msg with
     | InputArea msg' -> 
         let res, cmd = InputArea.update msg' model.inputArea

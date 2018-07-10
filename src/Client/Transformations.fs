@@ -22,15 +22,17 @@ let update msg model =
     | _ -> 
         model, Cmd.none    
 
-let actions model dispatch = 
-    [
-        "CSV", ( fun _ -> dispatch TransformToCsv)
-        "XML", ( fun _ -> dispatch TransformToXml)]
-    |> List.map (fun (txt, action) -> 
-                    match model with 
-                    | Enabled -> HtmlElements.actionButton txt action 
-                    | Disabled -> HtmlElements.disabledButton txt)
+
 let view model dispatch =
+    let actions model dispatch = 
+        [
+            "CSV", ( fun _ -> dispatch TransformToCsv)
+            "XML", ( fun _ -> dispatch TransformToXml)]
+        |> List.map (fun (txt, action) -> 
+                        match model with 
+                        | Enabled -> HtmlElements.actionButton txt action 
+                        | Disabled -> HtmlElements.disabledButton txt)
+                        
     div [] [
         Field.div [] [
             Label.label [] [ str "Choose output format:"]

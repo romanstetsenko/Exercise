@@ -1,7 +1,6 @@
 module HtmlElements
 open Fulma
 open Fable.Helpers.React
-
 let actionList actions =
     Button.list [] actions
 let actionButton txt onClick= 
@@ -15,5 +14,3 @@ let disabledButton txt =
         
 let container = Container.container
 let section = Section.section
-let transformButton = actionButton
-let historyButton = actionButton

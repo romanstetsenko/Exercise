@@ -152,6 +152,16 @@ Cinderella likes shoes."""
                         Sentence [Word "Peter"; Word "called"; Word "for"; Word "the"; Word "wolf"; Word "and"; Word "Aesop"; Word "came"];
                         Sentence [Word "Cinderella"; Word "likes"; Word "shoes"]]
                 let actual = [a1]
-                input |> assertParser pText actual             
+                input |> assertParser pText actual      
+            testCase "it fails when sentence doesn't start with a capital letter" <| fun _ ->
+                let input = """mary had a little lamb."""
+                match run pText input with
+                | Success _   -> Expect.isTrue "it shoudn't happen" false
+                | Failure _ -> Expect.isTrue "it shoud happen" true
+            testCase "it fails when every next sentence starts with a lowercase letter" <| fun _ ->
+                let input = """A. mary had a little lamb."""
+                match run pText input with
+                | Success (s,_,_)   -> Expect.isTrue ( sprintf "%A" s) false
+                | Failure _ -> Expect.isTrue "it should happen" true
         ]
     ]

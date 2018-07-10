@@ -66,9 +66,9 @@ let pSentence =
     .>> spaces
     |>> concat 
     |>> Sentence 
-    <?> "Any sentence"
+    <?> "Any sentence starting with a capital letter"
 
-let pText = spaces >>. many1 (spaces >>. pSentence ) |>> TextAst.Text <?> "Text"
+let pText = spaces >>. many1 (spaces >>. pSentence ) .>> eof |>> TextAst.Text <?> "Text starting with a capital letter"
 
 let parse t =
     match run pText t with

@@ -38,16 +38,14 @@ let update msg model =
 
 open Fable.Core.JsInterop
 let view model dispatch =
-    div [] [
-        Field.div [] [
-            Label.label [] [ str "Input text:"]
-            Control.div [] [
-                Textarea.textarea [
-                    Textarea.Color ( if model.hasError then Color.IsDanger else Color.NoColor ) 
-                    Textarea.ValueOrDefault model.textValue
-                    Textarea.OnChange (fun ev -> !!ev.target?value |> ChangeContent |> dispatch )
-                ] []
-            ]
-            Help.help [ Help.Color IsDanger ] [ str model.contentError ]
+    Field.div [] [
+        Label.label [] [ str "Input text:"]
+        Control.div [] [
+            Textarea.textarea [
+                Textarea.Color ( if model.hasError then Color.IsDanger else Color.NoColor ) 
+                Textarea.ValueOrDefault model.textValue
+                Textarea.OnChange (fun ev -> !!ev.target?value |> ChangeContent |> dispatch )
+            ] []
         ]
+        Help.help [ Help.Color IsDanger ] [ str model.contentError ]
     ]

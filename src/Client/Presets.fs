@@ -33,13 +33,11 @@ let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
 let toAction dispatcher (description, value) = HtmlElements.actionButton description ( fun _ -> dispatcher (SelectPreset value))
 
 let view (Model model) (dispatcher: Msg -> unit) = 
-    div [] [
-        Field.div [] [
-            Label.label [] [ str "Text samples:"]
-            Control.div [] [
-                model
-                |> List.map (toAction dispatcher)
-                |> HtmlElements.actionList
-            ]
+    Field.div [] [
+        Label.label [] [ str "Text samples:"]
+        Control.div [] [
+            model
+            |> List.map (toAction dispatcher)
+            |> HtmlElements.actionList
         ]
     ]

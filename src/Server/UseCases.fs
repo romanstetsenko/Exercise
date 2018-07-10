@@ -11,9 +11,9 @@ let useCase parse sort convert input =
 let handler converter = 
     useCase TextParser.parse TextAst.sortSentences converter
 
-open Model.Converters
-let handleToCsv = handler Csv.convert 
-let handleToXml = handler Xml.convert
+open Printers
+let handleToCsv = handler Csv.print 
+let handleToXml = handler Xml.print
 
 let handleRequest = function
     | ConvertToCsv input ->

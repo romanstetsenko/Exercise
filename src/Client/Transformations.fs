@@ -33,11 +33,9 @@ let view model dispatch =
                         | Enabled -> HtmlElements.actionButton txt action 
                         | Disabled -> HtmlElements.disabledButton txt)
                         
-    div [] [
-        Field.div [] [
-            Label.label [] [ str "Choose output format:"]
-            Control.div [] [
-                HtmlElements.actionList (actions model dispatch)
-            ]
+    Field.div [] [
+        Label.label [] [ str "Choose output format:"]
+        Control.div [] [
+            HtmlElements.actionList (actions model dispatch)
         ]
     ]

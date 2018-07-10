@@ -29,7 +29,7 @@ let update msg model =
 let view (model: Model) dispatch =
     let historyItemView (hi: string * HistoryItem) dispatch = 
         let (req, hi') = hi
-        Card.card [] [
+        Card.card [  ] [
                 yield Card.header  [ Common.Props [ OnClick (fun _ -> dispatch (SelectHistoryRequest req) )] ] [ 
                     Card.Header.title [] [
                         str req
@@ -63,13 +63,9 @@ let view (model: Model) dispatch =
                 ]
         ]
 
-    div [] [
-        Field.div [] [
-            Label.label [] [ str "History of requests:"]
-            div [] [
-                for hi in model do
-                    yield historyItemView hi dispatch
-            ]
-        ]
+    Field.div [] [
+        yield Label.label [] [ str "History of requests:"]
+        for hi in model do
+            yield! [historyItemView hi dispatch; br[]]
     ]
     

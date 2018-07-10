@@ -43,6 +43,7 @@ module Converters =
     
     module Csv =
         let convert sentences =
+            let delimiter = ", "
             let genHeaderCells i =
                 let dummyCell = ""
                 let headerCells = 
@@ -55,13 +56,13 @@ module Converters =
                     let currentLength = List.length s 
                     if acc <= currentLength then currentLength else acc 
                 let i = List.fold longestSentence 0 ss
-                genHeaderCells i |> String.concat ","
+                genHeaderCells i |> String.concat delimiter
  
             let toCsvRows sentences =
                 let toCsvRow index (Sentence ws) =
                     let cells = ws |> List.map (fun (Word w) -> w)
                     let rh = sprintf "Sentence %i" (index + 1)
-                    rh::cells |> String.concat ","
+                    rh::cells |> String.concat delimiter
                 let body = sentences |> List.mapi toCsvRow
                 let header = genHeader sentences
                 header::body

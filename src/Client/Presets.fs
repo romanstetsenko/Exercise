@@ -13,7 +13,9 @@ let init () =
     let model = 
         Model [
             "Single sentence","""Mary had a little lamb."""
+            "Single sentence with abbr","""Mrs.Mary had a little lamb."""
             "Multiple sentences","""Mary had a little lamb. Peter called for the wolf, and Aesop came. Cinderella likes shoes."""
+            "Bunch of words","""Mary had a little lamb"""
         ]
     model, Cmd.none
 let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =

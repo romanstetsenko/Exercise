@@ -4,12 +4,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Shared/Shared.fs" />
+    <Compile Include="Api.fs" />
     <Compile Include="HtmlElements.fs" />
     <Compile Include="Presets.fs" />
     <Compile Include="InputArea.fs" />
     <Compile Include="Transformations.fs" />
     <Compile Include="History.fs" />
-    <Compile Include="Api.fs" />
     <Compile Include="MainPage.fs" />
     <Compile Include="Client.fs" />
   </ItemGroup>

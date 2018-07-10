@@ -44,7 +44,7 @@ let view model dispatch =
             Control.div [] [
                 Textarea.textarea [
                     Textarea.Color ( if model.hasError then Color.IsDanger else Color.NoColor ) 
-                    Textarea.Value model.textValue
+                    Textarea.ValueOrDefault model.textValue
                     Textarea.OnChange (fun ev -> !!ev.target?value |> ChangeContent |> dispatch )
                 ] []
             ]

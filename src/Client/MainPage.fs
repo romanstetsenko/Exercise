@@ -53,10 +53,8 @@ let private handleTransformations msg' model =
         | Transformations.TransformToXml -> 
             toApiCommand Api.transformToXml textToTransform 
         | _ -> Cmd.none
-
     { model with transformations = res }, 
-
-    Cmd.batch [ cmd; Cmd.map Msg.History transformRequest ]
+        Cmd.batch [ cmd; Cmd.map Msg.History transformRequest ]
 
 let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
     match msg with
@@ -64,21 +62,28 @@ let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
         let res, cmd = InputArea.update msg' model.inputArea
         let tCmd = (if res.hasError then Transformations.Disable else Transformations.Enable) |> Cmd.ofMsg
         { model with inputArea = res }, 
-        Cmd.batch [            
-            Cmd.map InputArea cmd
-            Cmd.map Transformations tCmd
-        ]     
+            Cmd.batch [            
+                Cmd.map InputArea cmd
+                Cmd.map Transformations tCmd
+            ]     
     | Init -> failwith "Not Implemented"
     | Presets msg' -> 
         let (Presets.Msg.SelectPreset preset) = msg' 
         let res, cmd = Presets.update msg' model.presets
         { model with presets = res }, 
-        Cmd.batch [
-            Cmd.map Presets cmd
-            Cmd.ofMsg ((InputArea.ChangeContent preset) |> Msg.InputArea)
-        ]
+            Cmd.batch [
+                Cmd.map Presets cmd
+                Cmd.ofMsg ((InputArea.ChangeContent preset) |> Msg.InputArea)
+            ]
     | Transformations msg' -> handleTransformations msg' model        
-    | History(_) -> failwith "Not Implemented"        
+    | History msg' -> 
+        let res, cmd = History.update msg' model.history
+        let subCmd = 
+            match msg' with
+            | History.Msg.SelectHistoryRequest req -> 
+                Cmd.ofMsg ( (InputArea.Msg.ChangeContent req) |> InputArea)
+            | _ -> Cmd.none        
+        { model with history = res }, Cmd.batch [ cmd; subCmd]
 
 let view (model: Model) (dispatch: Msg -> unit) =
     let containers = 

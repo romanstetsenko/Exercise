@@ -13,7 +13,7 @@ let handler converter =
 
 open Printers
 let handleToCsv = handler Csv.print 
-let handleToXml = handler Xml.print
+let handleToXml = handler Xml.prettyPrint
 
 let handleRequest = function
     | ConvertToCsv input ->

@@ -71,7 +71,7 @@ let pSentence =
 let pText = spaces >>. many1 (spaces >>. pSentence ) .>> eof |>> TextAst.Text <?> "Text starting with a capital letter"
 
 let parse t =
-    match run pText t with
+    match run pText (FParsec.Text.NormalizeNewlines t) with
     | Success(result, _, _)   -> Result.Ok result
     | Failure(errorMsg, _, _) -> Result.Error errorMsg
 

@@ -5,17 +5,21 @@ module Xml =
     let private tag tag s  = sprintf "<%s>%s</%s>" tag s tag
     let private xmlHeader = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"""
 
-    let print sentences = 
-        let render tagName innerRenderer list = 
-            list
-            |> List.map innerRenderer
-            |> String.concat ""
-            |> tag tagName
+    let prettyPrint (sentences: Sentence list) = 
+        let genLevels level = [1..level] |> List.map (fun _ -> "\t") |> String.concat ""
+        let wordMap (Word word) = "<word>" + word + "</word>"
+        let sentenceMap level (Sentence words) = 
+            let lvl = genLevels level
+            words |> List.map (fun w ->  genLevels (level + 1)  + wordMap w) |> String.concat "\n"
+            |> ( fun ws -> lvl + "<sentence>" + 
+                                "\n" + ws + "\n" + 
+                                lvl + "</sentence>")
 
-        let renderWord = fun (Word w) -> render "word" id [w] 
-        let renderSentence = fun (Sentence s) -> render "sentence" renderWord s
-        let renderText = fun sentences -> render "text" renderSentence sentences
-        xmlHeader + (sentences |> renderText ) 
+        sentences
+        |> List.map (sentenceMap 1)
+        |> String.concat "\n"
+        |> (fun ss -> "<text>" + "\n" + ss + "\n" + "</text>")            
+        |> ( fun txt -> xmlHeader + "\n" + txt)
 
 module Csv =
     let print sentences =

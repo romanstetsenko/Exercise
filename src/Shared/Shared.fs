@@ -5,6 +5,7 @@ type Counter = int
 type Request =
     | ConvertToCsv of string
     | ConvertToXml of string
+    | ConvertToCsvMultipleTimes of string
 
 module Routes =
     module Api =

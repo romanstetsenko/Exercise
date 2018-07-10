@@ -7,6 +7,7 @@ type Model = | Enabled | Disabled
 
 type Msg = 
     | TransformToCsv
+    | TransformToCsvMultipleTimes
     | TransformToXml
     | Enable
     | Disable
@@ -27,6 +28,7 @@ let view model dispatch =
     let actions model dispatch = 
         [
             "CSV", ( fun _ -> dispatch TransformToCsv)
+            "CSV Multiple times", ( fun _ -> dispatch TransformToCsvMultipleTimes)
             "XML", ( fun _ -> dispatch TransformToXml)]
         |> List.map (fun (txt, action) -> 
                         match model with 

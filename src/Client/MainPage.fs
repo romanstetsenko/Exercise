@@ -52,6 +52,8 @@ let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
             match msg' with
             | Transformations.TransformToCsv -> 
                 toApiCommand Api.transformToCsv textToTransform 
+            | Transformations.TransformToCsvMultipleTimes -> 
+                toApiCommand Api.transformToCsvMultipleTimes textToTransform 
             | Transformations.TransformToXml -> 
                 toApiCommand Api.transformToXml textToTransform 
             | _ -> Cmd.none

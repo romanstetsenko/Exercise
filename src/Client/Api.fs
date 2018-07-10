@@ -18,6 +18,9 @@ let transformTo requestType text =
 let transformToCsv = 
     transformTo Shared.ConvertToCsv
 
+let transformToCsvMultipleTimes = 
+    transformTo Shared.ConvertToCsvMultipleTimes
+
 let transformToXml = 
     transformTo Shared.ConvertToXml
 

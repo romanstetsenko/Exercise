@@ -5,9 +5,11 @@ open Fable.Helpers.React
 
 type Model = (string*string) list
 
+
 type Msg = 
     | Reset 
     | SelectHistoryRequest of string
+    | Prepend of (string*string)
 
 let init () =
     [], Cmd.none

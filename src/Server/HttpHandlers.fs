@@ -17,9 +17,5 @@ let transformHandler: HttpHandler =
     fun (next: HttpFunc) ctx ->
         task {
             let! tr = ctx.BindModelAsync<Request>()
-            let response = 
-                match handleRequest tr with
-                | Ok r -> Successful.OK r next ctx 
-                | Error r -> RequestErrors.UNPROCESSABLE_ENTITY r next ctx 
-            return! response            
+            return! Successful.OK (handleRequest tr) next ctx
         }

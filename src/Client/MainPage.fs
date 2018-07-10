@@ -1,12 +1,18 @@
-module Application
+module MainPage
 open Elmish
+open Fable.PowerPack
 
 type Model = {
     presets: Presets.Model
     inputArea: InputArea.Model
     transformations: Transformations.Model
     history: History.Model
+    isWaitingServer: bool
 }
+
+type TransformTextRes =
+    | Response of Result<string, string>
+    | Exn of exn
 
 type Msg = 
     | Init
@@ -14,6 +20,7 @@ type Msg =
     | InputArea of InputArea.Msg
     | Transformations of Transformations.Msg 
     | History of History.Msg
+    | TransformTextResult of TransformTextRes //Result<string, string>
 
 let init () : Model * Cmd<Msg> = 
     let ps, psCmd = Presets.init()
@@ -25,6 +32,7 @@ let init () : Model * Cmd<Msg> =
         inputArea = ia
         transformations = ts
         history = h
+        isWaitingServer = false
     }, Cmd.batch [
         Cmd.map Presets psCmd
         Cmd.map InputArea iaCmd
@@ -41,8 +49,10 @@ let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
         Cmd.batch [            
             Cmd.map InputArea cmd
             Cmd.map Transformations tCmd
-        ]        
+        ]     
+
     | Init -> failwith "Not Implemented"
+
     | Presets msg' -> 
         let (Presets.Msg.SelectPreset preset) = msg' 
         let res, cmd = Presets.update msg' model.presets
@@ -51,10 +61,26 @@ let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
             Cmd.map Presets cmd
             Cmd.ofMsg ((InputArea.ChangeContent preset) |> Msg.InputArea)
         ]
+
     | Transformations msg' ->         
         let res, cmd = Transformations.update msg' model.transformations
-        { model with transformations = res }, cmd
+
+        let transformRequest = 
+            let textToTransform = model.inputArea.textValue
+            match msg' with
+            | Transformations.TransformToCsv -> 
+                Cmd.ofPromise Api.transformToCsv textToTransform (TransformTextRes.Response>>TransformTextResult) (TransformTextRes.Exn>>TransformTextResult)
+            | Transformations.TransformToXml -> 
+                Cmd.ofPromise Api.transformToXml textToTransform (TransformTextRes.Response>>TransformTextResult) (TransformTextRes.Exn>>TransformTextResult)
+            | _ -> Cmd.none
+
+        { model with transformations = res }, 
+
+        Cmd.batch [ cmd; transformRequest]
+
     | History(_) -> failwith "Not Implemented"        
+    | TransformTextResult (TransformTextRes.Exn ex) -> failwith "Not Implemented"
+    | TransformTextResult (TransformTextRes.Response r) -> failwith "Not Implemented"
 
 let view (model: Model) (dispatch: Msg -> unit) =
     let containers = 

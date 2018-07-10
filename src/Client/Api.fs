@@ -7,7 +7,7 @@ open Fable.Core.JsInterop
 let transformTo requestType text = 
     postRecord "/api/transform" (requestType text) []
     |> Promise.bind( fun r -> r.text() )
-    |> Promise.map (fun j -> j |> ofJson<Result<string, string>>)
+    |> Promise.map ofJson<Result<string, string>>
     |> Promise.catch( fun _ex -> 
 #if DEBUG 
         Console.WriteLine(_ex)

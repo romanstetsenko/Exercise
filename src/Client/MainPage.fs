@@ -1,6 +1,5 @@
 module MainPage
 open Elmish
-open Fable.PowerPack
 
 type Model = {
     presets: Presets.Model
@@ -10,17 +9,12 @@ type Model = {
     isWaitingServer: bool
 }
 
-type TransformTextRes =
-    | Response of Result<string, string>
-    | Exn of exn
-
 type Msg = 
     | Init
     | Presets of Presets.Msg
     | InputArea of InputArea.Msg
     | Transformations of Transformations.Msg 
     | History of History.Msg
-    | TransformTextResult of TransformTextRes //Result<string, string>
 
 let init () : Model * Cmd<Msg> = 
     let ps, psCmd = Presets.init()
@@ -40,6 +34,30 @@ let init () : Model * Cmd<Msg> =
         Cmd.map History hCmd
     ]
 
+let private handleTransformations msg' model =
+    let toApiCommand apiFunc text = 
+        Cmd.ofPromise apiFunc text 
+            (fun r -> 
+                let r' = History.HistoryItem.Response r
+                History.Msg.AddHistoryItem (text, r'))
+            (fun ex ->
+                let ex' = History.HistoryItem.Exn ex
+                History.Msg.AddHistoryItem (text, ex'))
+
+    let res, cmd = Transformations.update msg' model.transformations    
+    let transformRequest = 
+        let textToTransform = model.inputArea.textValue
+        match msg' with
+        | Transformations.TransformToCsv -> 
+            toApiCommand Api.transformToCsv textToTransform 
+        | Transformations.TransformToXml -> 
+            toApiCommand Api.transformToXml textToTransform 
+        | _ -> Cmd.none
+
+    { model with transformations = res }, 
+
+    Cmd.batch [ cmd; Cmd.map Msg.History transformRequest ]
+
 let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
     match msg with
     | InputArea msg' -> 
@@ -50,9 +68,7 @@ let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
             Cmd.map InputArea cmd
             Cmd.map Transformations tCmd
         ]     
-
     | Init -> failwith "Not Implemented"
-
     | Presets msg' -> 
         let (Presets.Msg.SelectPreset preset) = msg' 
         let res, cmd = Presets.update msg' model.presets
@@ -61,26 +77,8 @@ let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
             Cmd.map Presets cmd
             Cmd.ofMsg ((InputArea.ChangeContent preset) |> Msg.InputArea)
         ]
-
-    | Transformations msg' ->         
-        let res, cmd = Transformations.update msg' model.transformations
-
-        let transformRequest = 
-            let textToTransform = model.inputArea.textValue
-            match msg' with
-            | Transformations.TransformToCsv -> 
-                Cmd.ofPromise Api.transformToCsv textToTransform (TransformTextRes.Response>>TransformTextResult) (TransformTextRes.Exn>>TransformTextResult)
-            | Transformations.TransformToXml -> 
-                Cmd.ofPromise Api.transformToXml textToTransform (TransformTextRes.Response>>TransformTextResult) (TransformTextRes.Exn>>TransformTextResult)
-            | _ -> Cmd.none
-
-        { model with transformations = res }, 
-
-        Cmd.batch [ cmd; transformRequest]
-
+    | Transformations msg' -> handleTransformations msg' model        
     | History(_) -> failwith "Not Implemented"        
-    | TransformTextResult (TransformTextRes.Exn ex) -> failwith "Not Implemented"
-    | TransformTextResult (TransformTextRes.Response r) -> failwith "Not Implemented"
 
 let view (model: Model) (dispatch: Msg -> unit) =
     let containers = 

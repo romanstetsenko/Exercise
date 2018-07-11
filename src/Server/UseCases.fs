@@ -22,11 +22,11 @@ let bulkUseCase parse sort convert input =
     |> Array.fold (fun (results, errors) result ->
             match result with
             | Ok _ -> (results + 1, errors)
-            | Error _ -> (results, errors + 1)
-    ) (0,0)
+            | Error _ -> (results, errors + 1)) 
+        (0,0)
     |> (fun (results, errors) -> 
             let elapsedTime = DateTime.Now.Ticks - start |>( fun ts -> new DateTime(ts) )
-            let log = sprintf "Results: %i Errors: %i Time: %i seconds " results errors (elapsedTime.Second + elapsedTime.Minute * 60)
+            let log = sprintf "%i results. %i errors. Spent %i seconds." results errors (elapsedTime.Second + elapsedTime.Minute * 60)
             if (errors < results) then Result.Ok log else Result.Error log)
 
 

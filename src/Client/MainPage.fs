@@ -96,7 +96,10 @@ let view (model: Model) (dispatch: Msg -> unit) =
             Transformations.view model.transformations (Msg.Transformations>>dispatch)
             History.view model.history (Msg.History>>dispatch)
         ] 
-        |> List.map (fun el -> HtmlElements.container [] [el]) 
+        |> List.map (fun el -> HtmlElements.container [] [
+            el
+            Fable.Helpers.React.hr []
+        ]) 
 
     HtmlElements.section [] containers
     

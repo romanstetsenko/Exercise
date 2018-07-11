@@ -2,19 +2,27 @@ module UseCases
 open Model
 open Shared
 open System
+let private logStab _ = ()
+let useCase parse sort convert  logger (input: string) =
+    let log str l = 
+        logger ( sprintf "%s:\n %A" str l)
+        l
 
-let useCase parse sort convert input =
-    input 
+    input
+    |> log "Raw input" 
     |> parse 
+    |> log "Parsed result"
     |> Result.map sort 
+    |> log "Sorted result"
     |> Result.map convert
+    |> log "Converted result"
 
 let bulkUseCase parse sort convert input = 
     let start = DateTime.Now.Ticks
     [1..100000]
     |> List.map (fun _ ->
         async {
-           return (useCase parse sort convert input)
+           return (useCase parse sort convert logStab input)
         }
     )
     |> Async.Parallel
@@ -33,16 +41,17 @@ let bulkUseCase parse sort convert input =
 let handler converter useCase = 
     useCase TextParser.parse TextAst.sortSentences converter
 
+let handlerWithLoggin logger = handler logger
 open Printers
-let handleToCsv = handler Csv.print useCase 
-let handleToXml = handler Xml.prettyPrint useCase
+let handleToCsv logger = handlerWithLoggin Csv.print useCase logger
+let handleToXml logger = handlerWithLoggin Xml.prettyPrint useCase logger
 let handleBulkToCsv = handler Csv.print bulkUseCase
 
-let handleRequest = function
+let handleRequest logger = function
     | ConvertToCsv input ->
-        handleToCsv input
+        handleToCsv logger input
     | ConvertToXml input -> 
-        handleToXml input
+        handleToXml logger input
     | ConvertToCsvMultipleTimes input -> 
         handleBulkToCsv input   
 
